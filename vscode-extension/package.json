@@ -1,0 +1,143 @@
+{
+  "name": "claude-color-vscode",
+  "displayName": "Claude Color",
+  "description": "AI-powered color palette generator for VS Code with preference learning",
+  "version": "1.0.0",
+  "publisher": "joshleichtung",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other",
+    "Themes",
+    "Snippets"
+  ],
+  "keywords": [
+    "color",
+    "palette",
+    "ai",
+    "claude",
+    "design",
+    "accessibility",
+    "theme"
+  ],
+  "activationEvents": [
+    "onCommand:claude-color.generatePalette",
+    "onCommand:claude-color.generateFromPrompt",
+    "onCommand:claude-color.extractFromImage",
+    "onCommand:claude-color.showFavorites",
+    "onCommand:claude-color.getRecommendations",
+    "onCommand:claude-color.openEditor"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-color.generatePalette",
+        "title": "Generate Color Palette",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.generateFromPrompt",
+        "title": "Generate Palette from Prompt",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.extractFromImage",
+        "title": "Extract Colors from Image",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.showFavorites",
+        "title": "Show Favorite Palettes",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.getRecommendations",
+        "title": "Get Personalized Recommendations",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.openEditor",
+        "title": "Open Palette Editor",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.insertPalette",
+        "title": "Insert Palette as CSS Variables",
+        "category": "Claude Color"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Color",
+      "properties": {
+        "claudeColor.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API key for AI-powered features",
+          "order": 1
+        },
+        "claudeColor.defaultScheme": {
+          "type": "string",
+          "enum": [
+            "complementary",
+            "analogous",
+            "triadic",
+            "tetradic",
+            "monochromatic",
+            "random"
+          ],
+          "default": "complementary",
+          "description": "Default color scheme for palette generation",
+          "order": 2
+        },
+        "claudeColor.autoTrackInteractions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically track interactions for personalized recommendations",
+          "order": 3
+        },
+        "claudeColor.insertFormat": {
+          "type": "string",
+          "enum": [
+            "css-variables",
+            "sass-variables",
+            "tailwind-config",
+            "json",
+            "js-object"
+          ],
+          "default": "css-variables",
+          "description": "Format for inserting palettes into editor",
+          "order": 4
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "claude-color": "^1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshleichtung/claude-color.git",
+    "directory": "vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/joshleichtung/claude-color/issues"
+  },
+  "homepage": "https://github.com/joshleichtung/claude-color#readme",
+  "license": "MIT"
+}
