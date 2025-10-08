@@ -18,9 +18,7 @@ export class InvalidColorError extends Error {
  */
 export class ColorRangeError extends Error {
   constructor(component: string, value: number, min: number, max: number) {
-    super(
-      `Color component "${component}" value ${value} is out of range. Expected ${min}-${max}`
-    );
+    super(`Color component "${component}" value ${value} is out of range. Expected ${min}-${max}`);
     this.name = 'ColorRangeError';
   }
 }
