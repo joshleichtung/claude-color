@@ -347,6 +347,183 @@ This document tracks all development progress, decisions, and points where user 
 
 ---
 
+## Phase 3: Multi-Suggestion System
+
+**Status**: ✅ Complete
+**Started**: 2025-10-08
+**Completed**: 2025-10-08
+**Tag**: v0.3.0-phase3-complete
+**Commit**: 1478a5e
+
+### Progress
+
+- ✅ Multi-suggestion architecture designed
+- ✅ Variation generator with 10 strategies
+- ✅ 5 variation types (hue, saturation, lightness, scheme, hybrid)
+- ✅ CLI --suggestions flag (1-10 variations)
+- ✅ Terminal rendering for multiple suggestions
+- ✅ Comprehensive tests (33 new tests, 160 total)
+- ✅ Performance validated (<100ms for 5 suggestions)
+
+### Test Results
+
+**Total Tests**: 160 passing (33 new)
+- Conversions: 39 tests
+- Theory: 34 tests
+- Export: 30 tests
+- Renderer: 24 tests
+- Suggestions: 33 tests (NEW)
+
+**Coverage**:
+- Statements: 100%
+- Branches: 92.1%
+- Functions: 100%
+- Lines: 100%
+
+### Deliverables
+
+**Source Files**:
+- `src/core/suggestions.ts` - Multi-suggestion generator
+- `src/types/color.ts` - New types (VariationStrategy, PaletteSuggestion, SuggestionSet)
+- `src/terminal/renderer.ts` - renderSuggestionSet() function
+- `src/cli.ts` - Enhanced generate command with --suggestions option
+- `src/index.ts` - Exported all public APIs
+
+**Test Files**:
+- `tests/unit/suggestions.test.ts` - 33 comprehensive tests
+- `tests/setup.ts` - Added nanoid mock for ESM compatibility
+
+### Key Features
+
+**Variation Strategies**:
+1. **Hue-shift**: Rotate hue around color wheel (±15°)
+2. **Saturation-variation**: Adjust color vibrancy (±15%)
+3. **Lightness-variation**: Adjust brightness (±10%)
+4. **Scheme-alternative**: Use different color scheme
+5. **Hybrid**: Combine multiple strategies
+
+**10 Generated Variations**:
+1. Original (base scheme, rank 1)
+2. Vibrant (higher saturation +15%)
+3. Muted (lower saturation -15%)
+4. Warm (hue shift -15° toward red/orange)
+5. Cool (hue shift +15° toward blue)
+6. Light (lightness +10%)
+7. Dark (lightness -10%)
+8. Alternative scheme (e.g., complementary → triadic)
+9. Hybrid warm+vibrant
+10. Hybrid cool+muted
+
+**Terminal Display**:
+- Ranked suggestions with descriptions
+- Strategy indicators for each variation
+- Side-by-side color blocks for all suggestions
+- Scheme and base color metadata
+
+**CLI Usage**:
+```bash
+# Single palette (default)
+claude-color generate -s analogous -b "#FF5733"
+
+# 3 variations
+claude-color gen -s complementary -b "#E74C3C" --suggestions 3
+
+# Maximum variations
+claude-color generate --suggestions 5
+```
+
+### Decisions
+
+#### [DECISION-3.1] Number of Variations
+**Question**: How many variations to generate by default?
+**Options**:
+1. Always generate 5 (like coolors.co)
+2. Generate 1 by default, optional 3-5
+3. Generate 3-5 by default
+
+**Choice**: Generate 1 by default, optional 1-10 ✓ **[AUTONOMOUS]**
+**Rationale**: Maintains backward compatibility with Phase 2. Users who want single palette can continue using existing workflow. Power users can request 3-10 variations via --suggestions flag. Supports PRD requirement of "3-5 variations per request" while allowing flexibility.
+**Date**: 2025-10-08
+
+#### [DECISION-3.2] Variation Strategy Distribution
+**Question**: What variation strategies to include?
+**Options**:
+1. Only hue variations (simple)
+2. Hue + saturation (moderate)
+3. Hue + saturation + lightness + scheme (comprehensive)
+
+**Choice**: Comprehensive with 5 strategy types ✓ **[AUTONOMOUS]**
+**Rationale**: PRD states "variations share aesthetic DNA but differ in execution." Need diverse approaches: hue shifts (warm/cool), saturation (vibrant/muted), lightness (light/dark), alternative schemes, and hybrid combinations. This covers all major ways designers think about color variations.
+**Date**: 2025-10-08
+
+#### [DECISION-3.3] Variation Ranking
+**Question**: How to rank suggestions?
+**Options**:
+1. Random order
+2. Original first, then variations
+3. AI-predicted best matches
+
+**Choice**: Original first (rank 1), then variations ✓ **[AUTONOMOUS]**
+**Rationale**: Original palette is what user explicitly requested. Rank 1 ensures it's always shown first. Variations ranked 2-10 explore alternative executions. Predictable ordering helps users understand what each variation represents. AI ranking deferred to Phase 5 (prompt interpretation).
+**Date**: 2025-10-08
+
+#### [DECISION-3.4] ESM Module Mocking Strategy
+**Question**: How to handle nanoid ESM import issues in tests?
+**Options**:
+1. Downgrade to CommonJS version
+2. Configure Jest for ESM
+3. Mock nanoid in tests
+
+**Choice**: Mock nanoid in tests ✓ **[AUTONOMOUS]**
+**Rationale**: Consistent with chalk mocking approach from Phase 2. nanoid v5.x is ESM-only. Mocking is simpler than full ESM configuration in Jest. Tests don't need actual collision-resistant IDs - deterministic test IDs are better for testing. Keeps production code using latest nanoid.
+**Date**: 2025-10-08
+
+#### [DECISION-3.5] Suggestion Set Export
+**Question**: When exporting with --suggestions, which palette to export?
+**Options**:
+1. Export all suggestions (multiple files)
+2. Export first suggestion only
+3. Prompt user to select
+
+**Choice**: Export first suggestion only ✓ **[AUTONOMOUS]**
+**Rationale**: First suggestion is the original/primary palette (rank 1). Most users want single export. Multiple file export adds complexity. Interactive selection breaks non-interactive CLI usage. Can be enhanced in Phase 7 (Interactive TUI) where users can select which suggestion to export.
+**Date**: 2025-10-08
+
+### Issues Resolved
+
+**Issue 1**: nanoid ESM Import in Tests
+- **Symptom**: `Cannot use import statement outside a module` for nanoid
+- **Root Cause**: nanoid v5.x is pure ESM, same as chalk issue from Phase 2
+- **Solution**: Added nanoid mock to `tests/setup.ts` with deterministic ID generation
+- **Result**: All 160 tests pass with mocked nanoid
+
+**Issue 2**: TypeScript Optional Chaining Type Error
+- **Symptom**: `suggestionSet.suggestions[0]?.palette` could be undefined
+- **Root Cause**: TypeScript strict mode detects potential undefined access
+- **Solution**: Changed optional chaining to explicit check: `if (suggestionSet.suggestions[0])`
+- **Result**: Zero TypeScript errors, safe export handling
+
+**Issue 3**: ESLint Curly Brace Errors
+- **Symptom**: "Expected { after 'if' condition" for single-line if statements
+- **Root Cause**: ESLint curly rule requires braces for all blocks
+- **Solution**: Added braces to hue adjustment if statements
+- **Result**: All linting passes
+
+### Performance
+
+**Suggestion Generation**:
+- 5 suggestions: <100ms (validated in tests)
+- 10 suggestions: <200ms (validated in tests)
+- Per-palette generation: ~10-20ms
+- Meets PRD requirement: "<2 second generation time"
+
+**Memory**:
+- Each suggestion: ~500 bytes (palette + metadata)
+- 10 suggestions: ~5KB total
+- Negligible overhead for CLI usage
+
+---
+
 ## Decision Template (For Future Phases)
 
 ```markdown
