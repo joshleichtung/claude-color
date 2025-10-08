@@ -2,6 +2,7 @@
   "name": "claude-color",
   "version": "0.0.0",
   "description": "AI-powered terminal color palette generator with preference learning",
+  "type": "module",
   "main": "dist/index.js",
   "bin": {
     "claude-color": "dist/cli.js"

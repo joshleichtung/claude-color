@@ -23,6 +23,7 @@ import { getFavoritesManager } from './storage/favorites';
 import { generateFromPrompt, validateApiKey } from './ai/prompt';
 import { extractFromUrl, validateUrl } from './extraction/web';
 import { extractFromImage, validateImagePath, getSupportedFormats } from './extraction/image';
+import { launchPaletteEditor } from './tui';
 
 /**
  * Command option types
@@ -570,6 +571,73 @@ program
       }
     }
   );
+
+/**
+ * Edit command - interactive palette editor
+ */
+program
+  .command('edit <colors...>')
+  .description('Interactively edit a color palette')
+  .option('--scheme <type>', 'Color scheme for the palette', 'random')
+  .action((colorHexes: string[], options: { scheme: string }) => {
+    try {
+      // Parse colors
+      const colors = colorHexes.map(hex => createColorFromHex(hex));
+
+      // Ensure we have exactly 5 colors
+      if (colors.length > 5) {
+        console.error('Error: Maximum 5 colors allowed');
+        process.exit(1);
+      }
+
+      // Pad with random colors if less than 5
+      while (colors.length < 5) {
+        colors.push(generateRandomColor());
+      }
+
+      // Create initial palette
+      const palette: Palette = {
+        id: nanoid(),
+        colors,
+        scheme: options.scheme as ColorScheme,
+        metadata: {
+          created: new Date(),
+          generationMethod: 'scheme',
+        },
+      };
+
+      // Launch interactive editor
+      launchPaletteEditor(
+        palette,
+        (editedPalette: Palette) => {
+          // Save the edited palette
+          console.log('\n✓ Palette saved!\n');
+          console.log(
+            renderPaletteWithMetadata(editedPalette, {
+              showHex: true,
+              showRgb: false,
+              showHsl: false,
+            })
+          );
+
+          // Save as favorite
+          const favManager = getFavoritesManager();
+          void favManager.saveFavorite(editedPalette, `edited-${editedPalette.id.slice(0, 8)}`, [
+            'edited',
+          ]);
+          console.log('\nSaved to favorites. Use "claude-color favorites" to view.');
+        },
+        () => {
+          console.log('\n✓ Exited without saving');
+        }
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
 
 /**
  * Favorites command - list saved palettes

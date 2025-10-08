@@ -125,3 +125,9 @@ jest.mock('@anthropic-ai/sdk', () => {
     })),
   };
 });
+
+// Mock TUI modules to avoid ESM issues with Ink
+jest.mock('../src/tui', () => ({
+  PaletteEditor: jest.fn(),
+  launchPaletteEditor: jest.fn(),
+}));
