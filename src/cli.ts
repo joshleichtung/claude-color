@@ -21,6 +21,8 @@ import { writeFileSync, readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
 import { getFavoritesManager } from './storage/favorites';
 import { generateFromPrompt, validateApiKey } from './ai/prompt';
+import { extractFromUrl, validateUrl } from './extraction/web';
+import { extractFromImage, validateImagePath, getSupportedFormats } from './extraction/image';
 
 /**
  * Command option types
@@ -404,49 +406,170 @@ program
   .option('--hex', 'Show hex values', true)
   .option('--rgb', 'Show RGB values', false)
   .option('--hsl', 'Show HSL values', false)
-  .action(async (description: string, options: { save?: string; tags?: string; hex: boolean; rgb: boolean; hsl: boolean }) => {
-    try {
-      // Validate API key
-      if (!validateApiKey()) {
-        console.error('Error: ANTHROPIC_API_KEY environment variable is required');
-        console.error('Get your API key from https://console.anthropic.com/');
-        console.error('\nSet it using:');
-        console.error('  export ANTHROPIC_API_KEY=your-key-here');
-        console.error('Or create a .env file with: ANTHROPIC_API_KEY=your-key-here');
+  .action(
+    async (
+      description: string,
+      options: { save?: string; tags?: string; hex: boolean; rgb: boolean; hsl: boolean }
+    ) => {
+      try {
+        // Validate API key
+        if (!validateApiKey()) {
+          console.error('Error: ANTHROPIC_API_KEY environment variable is required');
+          console.error('Get your API key from https://console.anthropic.com/');
+          console.error('\nSet it using:');
+          console.error('  export ANTHROPIC_API_KEY=your-key-here');
+          console.error('Or create a .env file with: ANTHROPIC_API_KEY=your-key-here');
+          process.exit(1);
+        }
+
+        console.log(`\n🤖 Generating palette from: "${description}"\n`);
+
+        // Generate palette from AI
+        const palette = await generateFromPrompt(description);
+
+        // Display palette
+        console.log(
+          renderPaletteWithMetadata(palette, {
+            showHex: options.hex,
+            showRgb: options.rgb,
+            showHsl: options.hsl,
+          })
+        );
+
+        // Show AI reasoning if available
+        if (palette.metadata.aiReasoning) {
+          console.log(`\n💡 AI Reasoning: ${palette.metadata.aiReasoning}\n`);
+        }
+
+        // Save as favorite if requested
+        if (options.save) {
+          const favManager = getFavoritesManager();
+          const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
+          await favManager.saveFavorite(palette, options.save, tags);
+          console.log(`✓ Saved as favorite: "${options.save}"`);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(`Error: ${error.message}`);
+        }
         process.exit(1);
       }
-
-      console.log(`\n🤖 Generating palette from: "${description}"\n`);
-
-      // Generate palette from AI
-      const palette = await generateFromPrompt(description);
-
-      // Display palette
-      console.log(renderPaletteWithMetadata(palette, {
-        showHex: options.hex,
-        showRgb: options.rgb,
-        showHsl: options.hsl,
-      }));
-
-      // Show AI reasoning if available
-      if (palette.metadata.aiReasoning) {
-        console.log(`\n💡 AI Reasoning: ${palette.metadata.aiReasoning}\n`);
-      }
-
-      // Save as favorite if requested
-      if (options.save) {
-        const favManager = getFavoritesManager();
-        const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
-        await favManager.saveFavorite(palette, options.save, tags);
-        console.log(`✓ Saved as favorite: "${options.save}"`);
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(`Error: ${error.message}`);
-      }
-      process.exit(1);
     }
-  });
+  );
+
+/**
+ * From URL command - extract colors from a website
+ */
+program
+  .command('from-url <url>')
+  .alias('url')
+  .description('Extract color palette from a website')
+  .option('--save <name>', 'Save palette as favorite with given name')
+  .option('--tags <tags>', 'Comma-separated tags for saved favorite')
+  .option('--hex', 'Show hex values', true)
+  .option('--rgb', 'Show RGB values', false)
+  .option('--hsl', 'Show HSL values', false)
+  .action(
+    async (
+      url: string,
+      options: { save?: string; tags?: string; hex: boolean; rgb: boolean; hsl: boolean }
+    ) => {
+      try {
+        // Validate URL
+        if (!validateUrl(url)) {
+          console.error('Error: Invalid URL. Must be http:// or https://');
+          process.exit(1);
+        }
+
+        console.log(`\n🌐 Extracting colors from: ${url}\n`);
+
+        // Extract palette from URL
+        const palette = await extractFromUrl(url);
+
+        // Display palette
+        console.log(
+          renderPaletteWithMetadata(palette, {
+            showHex: options.hex,
+            showRgb: options.rgb,
+            showHsl: options.hsl,
+          })
+        );
+
+        console.log('');
+
+        // Save as favorite if requested
+        if (options.save) {
+          const favManager = getFavoritesManager();
+          const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
+          await favManager.saveFavorite(palette, options.save, tags);
+          console.log(`✓ Saved as favorite: "${options.save}"\n`);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(`Error: ${error.message}`);
+        }
+        process.exit(1);
+      }
+    }
+  );
+
+/**
+ * From image command - extract colors from an image file
+ */
+program
+  .command('from-image <path>')
+  .alias('img')
+  .description('Extract color palette from an image file')
+  .option('--save <name>', 'Save palette as favorite with given name')
+  .option('--tags <tags>', 'Comma-separated tags for saved favorite')
+  .option('--hex', 'Show hex values', true)
+  .option('--rgb', 'Show RGB values', false)
+  .option('--hsl', 'Show HSL values', false)
+  .action(
+    async (
+      imagePath: string,
+      options: { save?: string; tags?: string; hex: boolean; rgb: boolean; hsl: boolean }
+    ) => {
+      try {
+        // Validate image path
+        const isValid = await validateImagePath(imagePath);
+        if (!isValid) {
+          console.error(`Error: Cannot read image file: ${imagePath}`);
+          console.error(`Supported formats: ${getSupportedFormats().join(', ')}`);
+          process.exit(1);
+        }
+
+        console.log(`\n🖼️  Extracting colors from: ${imagePath}\n`);
+
+        // Extract palette from image
+        const palette = await extractFromImage(imagePath);
+
+        // Display palette
+        console.log(
+          renderPaletteWithMetadata(palette, {
+            showHex: options.hex,
+            showRgb: options.rgb,
+            showHsl: options.hsl,
+          })
+        );
+
+        console.log('');
+
+        // Save as favorite if requested
+        if (options.save) {
+          const favManager = getFavoritesManager();
+          const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
+          await favManager.saveFavorite(palette, options.save, tags);
+          console.log(`✓ Saved as favorite: "${options.save}"\n`);
+        }
+      } catch (error) {
+        if (error instanceof Error) {
+          console.error(`Error: ${error.message}`);
+        }
+        process.exit(1);
+      }
+    }
+  );
 
 /**
  * Favorites command - list saved palettes

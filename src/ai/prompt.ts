@@ -82,11 +82,7 @@ function parsePaletteResponse(content: string): {
   const data = JSON.parse(jsonMatch[0]) as AIPaletteResponse;
 
   // Validate response structure
-  if (
-    !data.colors ||
-    !Array.isArray(data.colors) ||
-    data.colors.length !== 5
-  ) {
+  if (!data.colors || !Array.isArray(data.colors) || data.colors.length !== 5) {
     throw new Error('Response must contain exactly 5 colors');
   }
 
@@ -141,9 +137,7 @@ export async function generateFromPrompt(prompt: string): Promise<Palette> {
   }
 
   // Parse palette data
-  const { colors: hexColors, scheme, reasoning } = parsePaletteResponse(
-    content.text
-  );
+  const { colors: hexColors, scheme, reasoning } = parsePaletteResponse(content.text);
 
   // Convert hex colors to full Color objects
   const colors = hexColors.map(hex => createColorFromHex(hex));
