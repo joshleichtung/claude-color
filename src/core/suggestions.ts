@@ -5,13 +5,7 @@
  */
 
 import { nanoid } from 'nanoid';
-import {
-  Color,
-  ColorScheme,
-  Palette,
-  PaletteSuggestion,
-  SuggestionSet,
-} from '../types';
+import { Color, ColorScheme, Palette, PaletteSuggestion, SuggestionSet } from '../types';
 import { createColorFromHsl } from './conversions';
 import { generatePalette } from './theory';
 

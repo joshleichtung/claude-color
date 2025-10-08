@@ -104,3 +104,25 @@ export interface SuggestionSet {
   requestedScheme: ColorScheme;
   generatedAt: Date;
 }
+
+/**
+ * A favorite palette saved by the user
+ */
+export interface FavoritePalette extends Palette {
+  name: string;
+  tags: string[];
+  usageCount: number;
+  savedAt: Date;
+  lastUsed?: Date;
+}
+
+/**
+ * Favorites database schema
+ */
+export interface FavoritesDatabase {
+  favorites: FavoritePalette[];
+  metadata: {
+    version: string;
+    lastModified: Date;
+  };
+}

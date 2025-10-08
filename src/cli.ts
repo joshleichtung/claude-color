@@ -13,15 +13,12 @@ import { VERSION } from './index';
 import { createColorFromHex } from './core/conversions';
 import { generatePalette, generateRandomColor } from './core/theory';
 import { generateSuggestions } from './core/suggestions';
-import {
-  renderPalette,
-  renderPaletteWithMetadata,
-  renderSuggestionSet,
-} from './terminal/renderer';
+import { renderPalette, renderPaletteWithMetadata, renderSuggestionSet } from './terminal/renderer';
 import { exportPalette, type ExportFormat } from './utils/export';
-import { ColorScheme, Palette } from './types';
-import { writeFileSync } from 'fs';
+import { ColorScheme, Palette, FavoritesDatabase } from './types';
+import { writeFileSync, readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
+import { getFavoritesManager } from './storage/favorites';
 
 /**
  * Command option types
@@ -36,6 +33,8 @@ interface GenerateOptions {
   hsl: boolean;
   export?: string;
   output?: string;
+  save?: string;
+  tags?: string;
 }
 
 interface RandomOptions {
@@ -96,7 +95,9 @@ program
   .option('--hsl', 'Show HSL values', false)
   .option('-e, --export <format>', 'Export format (hex, css, scss, json, js, ts, tailwind, svg)')
   .option('-o, --output <file>', 'Output file for export')
-  .action((options: GenerateOptions) => {
+  .option('--save <name>', 'Save palette as favorite with given name')
+  .option('--tags <tags>', 'Comma-separated tags for saved favorite')
+  .action(async (options: GenerateOptions) => {
     const scheme = options.scheme as ColorScheme;
     const count = parseInt(options.count, 10);
     const numSuggestions = parseInt(options.suggestions, 10);
@@ -169,6 +170,14 @@ program
           console.log(content);
         }
       }
+
+      // Save as favorite if requested
+      if (options.save) {
+        const favManager = getFavoritesManager();
+        const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
+        await favManager.saveFavorite(palette, options.save, tags);
+        console.log(`\n✓ Saved as favorite: "${options.save}"`);
+      }
     } else {
       // Multiple suggestions
       const suggestionSet = generateSuggestions(baseColor, scheme, numSuggestions);
@@ -186,6 +195,14 @@ program
           console.log('\n--- Export (First Suggestion) ---');
           console.log(content);
         }
+      }
+
+      // Save first suggestion as favorite if requested
+      if (options.save && suggestionSet.suggestions[0]) {
+        const favManager = getFavoritesManager();
+        const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
+        await favManager.saveFavorite(suggestionSet.suggestions[0].palette, options.save, tags);
+        console.log(`\n✓ Saved first suggestion as favorite: "${options.save}"`);
       }
     }
   });
@@ -366,6 +383,171 @@ program
       } else {
         console.log(content);
       }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Favorites command - list saved palettes
+ */
+program
+  .command('favorites')
+  .alias('fav')
+  .description('List favorite palettes')
+  .option('-l, --limit <number>', 'Maximum number to show', '10')
+  .option('--hex', 'Show hex values', true)
+  .option('--rgb', 'Show RGB values', false)
+  .option('--hsl', 'Show HSL values', false)
+  .action(async (options: { limit: string; hex: boolean; rgb: boolean; hsl: boolean }) => {
+    try {
+      const favManager = getFavoritesManager();
+      const limit = parseInt(options.limit, 10);
+      const favorites = await favManager.listFavorites(limit);
+
+      if (favorites.length === 0) {
+        console.log('\nNo favorite palettes saved yet.');
+        console.log('Use --save option when generating palettes to save them.');
+        return;
+      }
+
+      console.log(`\n📚 Your Favorite Palettes (${await favManager.count()} total)\n`);
+
+      favorites.forEach(fav => {
+        console.log(`🎨 ${fav.name} (${fav.id})`);
+        if (fav.tags.length > 0) {
+          console.log(`   Tags: ${fav.tags.join(', ')}`);
+        }
+        console.log(`   Scheme: ${fav.scheme} | Used: ${fav.usageCount} times`);
+        console.log(
+          renderPalette(fav.colors, { showHex: options.hex, showRgb: options.rgb, showHsl: options.hsl })
+        );
+        console.log('');
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Search command - search favorite palettes
+ */
+program
+  .command('search <query>')
+  .description('Search favorite palettes by name, tag, or color')
+  .option('--hex', 'Show hex values', true)
+  .option('--rgb', 'Show RGB values', false)
+  .option('--hsl', 'Show HSL values', false)
+  .action(async (query: string, options: { hex: boolean; rgb: boolean; hsl: boolean }) => {
+    try {
+      const favManager = getFavoritesManager();
+      const results = await favManager.searchFavorites(query);
+
+      if (results.length === 0) {
+        console.log(`\nNo favorites found matching "${query}"`);
+        return;
+      }
+
+      console.log(`\n🔍 Search Results for "${query}" (${results.length} found)\n`);
+
+      results.forEach(fav => {
+        console.log(`🎨 ${fav.name} (${fav.id})`);
+        if (fav.tags.length > 0) {
+          console.log(`   Tags: ${fav.tags.join(', ')}`);
+        }
+        console.log(
+          renderPalette(fav.colors, { showHex: options.hex, showRgb: options.rgb, showHsl: options.hsl })
+        );
+        console.log('');
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Delete favorite command
+ */
+program
+  .command('delete-favorite <id>')
+  .alias('del-fav')
+  .description('Delete a favorite palette by ID')
+  .action(async (id: string) => {
+    try {
+      const favManager = getFavoritesManager();
+      const deleted = await favManager.deleteFavorite(id);
+
+      if (deleted) {
+        console.log(`\n✓ Deleted favorite: ${id}`);
+      } else {
+        console.error(`\nError: No favorite found with ID: ${id}`);
+        process.exit(1);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Export favorites command
+ */
+program
+  .command('export-favorites <file>')
+  .description('Export all favorites to a JSON file')
+  .action(async (file: string) => {
+    try {
+      const favManager = getFavoritesManager();
+      const data = await favManager.exportAll();
+
+      writeFileSync(file, JSON.stringify(data, null, 2));
+      console.log(`\n✓ Exported ${data.favorites.length} favorites to ${file}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Import favorites command
+ */
+program
+  .command('import-favorites <file>')
+  .description('Import favorites from a JSON file')
+  .option('--overwrite', 'Overwrite existing favorites with same ID', false)
+  .action(async (file: string, options: { overwrite: boolean }) => {
+    try {
+      const content = readFileSync(file, 'utf-8');
+      const data: unknown = JSON.parse(content);
+
+      // Validate imported data structure
+      if (
+        !data ||
+        typeof data !== 'object' ||
+        !('favorites' in data) ||
+        !Array.isArray((data as { favorites: unknown }).favorites)
+      ) {
+        throw new Error('Invalid favorites file format');
+      }
+
+      const favManager = getFavoritesManager();
+      await favManager.importFavorites(data as FavoritesDatabase, options.overwrite);
+
+      const count = await favManager.count();
+      console.log(`\n✓ Import complete. Total favorites: ${count}`);
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Error: ${error.message}`);

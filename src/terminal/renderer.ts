@@ -231,9 +231,7 @@ export function renderSuggestionSet(
   // Header
   lines.push(chalk.bold.white(`\n🎨 ${suggestionSet.suggestions.length} Palette Variations`));
   lines.push(
-    chalk.gray(
-      `Scheme: ${suggestionSet.requestedScheme} | Base: ${suggestionSet.baseColor.hex}`
-    )
+    chalk.gray(`Scheme: ${suggestionSet.requestedScheme} | Base: ${suggestionSet.baseColor.hex}`)
   );
   lines.push('');
 

@@ -47,3 +47,57 @@ jest.mock('nanoid', () => ({
     return `test-id-${nanoidCounter}`.padEnd(size, '0');
   },
 }));
+
+// Mock lowdb to avoid ESM issues
+// Store data in memory indexed by file path
+const mockDatabases = new Map<string, any>();
+
+// Expose mockDatabases globally for test cleanup
+(global as any).mockDatabases = mockDatabases;
+
+jest.mock('lowdb', () => {
+  class MockLow<T> {
+    data: T | null = null;
+    private defaultData: T;
+    private adapter: any;
+
+    constructor(adapter: any, defaultData: T) {
+      this.adapter = adapter;
+      this.defaultData = defaultData;
+    }
+
+    async read() {
+      const filepath = this.adapter.filepath;
+      if (mockDatabases.has(filepath)) {
+        this.data = mockDatabases.get(filepath);
+      } else {
+        this.data = JSON.parse(JSON.stringify(this.defaultData)); // Deep clone
+      }
+    }
+
+    async write() {
+      const filepath = this.adapter.filepath;
+      if (this.data) {
+        mockDatabases.set(filepath, JSON.parse(JSON.stringify(this.data))); // Deep clone
+      }
+    }
+  }
+
+  return {
+    Low: MockLow,
+  };
+});
+
+jest.mock('lowdb/node', () => {
+  class MockJSONFile<_T> {
+    filepath: string;
+
+    constructor(filepath: string) {
+      this.filepath = filepath;
+    }
+  }
+
+  return {
+    JSONFile: MockJSONFile,
+  };
+});
