@@ -38,3 +38,12 @@ jest.mock('chalk', () => {
     __esModule: true,
   };
 });
+
+// Mock nanoid to avoid ESM issues
+let nanoidCounter = 0;
+jest.mock('nanoid', () => ({
+  nanoid: (size: number = 21) => {
+    nanoidCounter++;
+    return `test-id-${nanoidCounter}`.padEnd(size, '0');
+  },
+}));

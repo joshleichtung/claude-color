@@ -5,7 +5,7 @@
  */
 
 import chalk from 'chalk';
-import { Color, Palette } from '../types';
+import { Color, Palette, SuggestionSet } from '../types';
 
 /**
  * Options for rendering colors in the terminal
@@ -207,4 +207,46 @@ export function renderMultiplePalettes(palettes: Palette[], options: RenderOptio
       return `${header}\n${renderPaletteWithMetadata(palette, options)}`;
     })
     .join('\n');
+}
+
+/**
+ * Render a suggestion set with all variations
+ *
+ * @param suggestionSet - Set of palette suggestions
+ * @param options - Rendering options
+ * @returns Formatted string with all suggestions
+ *
+ * @example
+ * ```typescript
+ * const suggestions = generateSuggestions(baseColor, 'analogous', 5);
+ * console.log(renderSuggestionSet(suggestions));
+ * ```
+ */
+export function renderSuggestionSet(
+  suggestionSet: SuggestionSet,
+  options: RenderOptions = {}
+): string {
+  const lines: string[] = [];
+
+  // Header
+  lines.push(chalk.bold.white(`\n🎨 ${suggestionSet.suggestions.length} Palette Variations`));
+  lines.push(
+    chalk.gray(
+      `Scheme: ${suggestionSet.requestedScheme} | Base: ${suggestionSet.baseColor.hex}`
+    )
+  );
+  lines.push('');
+
+  // Render each suggestion
+  suggestionSet.suggestions.forEach(suggestion => {
+    const rank = chalk.bold.cyan(`[${suggestion.rank}]`);
+    const description = chalk.white(suggestion.description);
+    const strategy = chalk.gray(`(${suggestion.strategy})`);
+
+    lines.push(`${rank} ${description} ${strategy}`);
+    lines.push(renderPalette(suggestion.palette.colors, options));
+    lines.push(''); // Empty line between suggestions
+  });
+
+  return lines.join('\n');
 }

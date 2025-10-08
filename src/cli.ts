@@ -12,7 +12,12 @@ import { Command } from 'commander';
 import { VERSION } from './index';
 import { createColorFromHex } from './core/conversions';
 import { generatePalette, generateRandomColor } from './core/theory';
-import { renderPalette, renderPaletteWithMetadata } from './terminal/renderer';
+import { generateSuggestions } from './core/suggestions';
+import {
+  renderPalette,
+  renderPaletteWithMetadata,
+  renderSuggestionSet,
+} from './terminal/renderer';
 import { exportPalette, type ExportFormat } from './utils/export';
 import { ColorScheme, Palette } from './types';
 import { writeFileSync } from 'fs';
@@ -25,6 +30,7 @@ interface GenerateOptions {
   scheme: string;
   count: string;
   base?: string;
+  suggestions: string;
   hex: boolean;
   rgb: boolean;
   hsl: boolean;
@@ -72,14 +78,19 @@ program
 program
   .command('generate')
   .alias('gen')
-  .description('Generate a color palette')
+  .description('Generate color palette(s) with variations')
   .option(
     '-s, --scheme <type>',
     'Color scheme (complementary, analogous, triadic, tetradic, monochromatic, random)',
     'random'
   )
-  .option('-c, --count <number>', 'Number of colors to generate', '5')
+  .option('-c, --count <number>', 'Number of colors per palette', '5')
   .option('-b, --base <color>', 'Base color in hex format (e.g., #FF0000)')
+  .option(
+    '--suggestions <number>',
+    'Number of palette variations to generate (1-10, default: 1)',
+    '1'
+  )
   .option('--hex', 'Show hex values (default: true)', true)
   .option('--rgb', 'Show RGB values', false)
   .option('--hsl', 'Show HSL values', false)
@@ -88,6 +99,7 @@ program
   .action((options: GenerateOptions) => {
     const scheme = options.scheme as ColorScheme;
     const count = parseInt(options.count, 10);
+    const numSuggestions = parseInt(options.suggestions, 10);
 
     // Validate scheme
     const validSchemes: ColorScheme[] = [
@@ -100,6 +112,12 @@ program
     ];
     if (!validSchemes.includes(scheme)) {
       console.error(`Error: Invalid scheme "${scheme}". Valid options: ${validSchemes.join(', ')}`);
+      process.exit(1);
+    }
+
+    // Validate suggestions count
+    if (numSuggestions < 1 || numSuggestions > 10) {
+      console.error('Error: Suggestions count must be between 1 and 10');
       process.exit(1);
     }
 
@@ -116,39 +134,58 @@ program
       baseColor = generateRandomColor();
     }
 
-    // Generate palette
-    const colors = generatePalette(baseColor, scheme, count);
-
-    const palette: Palette = {
-      id: nanoid(8),
-      colors,
-      scheme,
-      metadata: {
-        created: new Date(),
-        generationMethod: 'scheme',
-      },
+    const renderOptions = {
+      showHex: options.hex,
+      showRgb: options.rgb,
+      showHsl: options.hsl,
     };
 
-    // Display palette
-    console.log(
-      renderPaletteWithMetadata(palette, {
-        showHex: options.hex,
-        showRgb: options.rgb,
-        showHsl: options.hsl,
-      })
-    );
+    // Generate and display based on suggestions count
+    if (numSuggestions === 1) {
+      // Single palette (original behavior)
+      const colors = generatePalette(baseColor, scheme, count);
+      const palette: Palette = {
+        id: nanoid(8),
+        colors,
+        scheme,
+        metadata: {
+          created: new Date(),
+          generationMethod: 'scheme',
+        },
+      };
 
-    // Export if requested
-    if (options.export) {
-      const format = options.export as ExportFormat;
-      const content = exportPalette(palette, format);
+      console.log(renderPaletteWithMetadata(palette, renderOptions));
 
-      if (options.output) {
-        writeFileSync(options.output, content);
-        console.log(`\n✓ Exported to ${options.output}`);
-      } else {
-        console.log('\n--- Export ---');
-        console.log(content);
+      // Export if requested
+      if (options.export) {
+        const format = options.export as ExportFormat;
+        const content = exportPalette(palette, format);
+
+        if (options.output) {
+          writeFileSync(options.output, content);
+          console.log(`\n✓ Exported to ${options.output}`);
+        } else {
+          console.log('\n--- Export ---');
+          console.log(content);
+        }
+      }
+    } else {
+      // Multiple suggestions
+      const suggestionSet = generateSuggestions(baseColor, scheme, numSuggestions);
+      console.log(renderSuggestionSet(suggestionSet, renderOptions));
+
+      // Export if requested (exports first suggestion)
+      if (options.export && suggestionSet.suggestions[0]) {
+        const format = options.export as ExportFormat;
+        const content = exportPalette(suggestionSet.suggestions[0].palette, format);
+
+        if (options.output) {
+          writeFileSync(options.output, content);
+          console.log(`✓ Exported first suggestion to ${options.output}`);
+        } else {
+          console.log('\n--- Export (First Suggestion) ---');
+          console.log(content);
+        }
       }
     }
   });

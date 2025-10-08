@@ -74,3 +74,33 @@ export interface GenerationOptions {
   count?: number;
   personalized?: boolean;
 }
+
+/**
+ * Variation strategy for generating palette alternatives
+ */
+export type VariationStrategy =
+  | 'hue-shift' // Shift base color hue
+  | 'saturation-variation' // Vary saturation levels
+  | 'lightness-variation' // Vary lightness levels
+  | 'scheme-alternative' // Use different color scheme
+  | 'hybrid'; // Combination of strategies
+
+/**
+ * A single palette suggestion with metadata
+ */
+export interface PaletteSuggestion {
+  palette: Palette;
+  description: string;
+  strategy: VariationStrategy;
+  rank: number; // 1-based ranking (1 = primary suggestion)
+}
+
+/**
+ * A set of palette suggestions generated from one request
+ */
+export interface SuggestionSet {
+  suggestions: PaletteSuggestion[];
+  baseColor: Color;
+  requestedScheme: ColorScheme;
+  generatedAt: Date;
+}
