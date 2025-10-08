@@ -1,0 +1,201 @@
+{
+  "name": "claude-color-cursor",
+  "displayName": "Claude Color for Cursor",
+  "description": "AI-powered color palette generator for Cursor with preference learning and AI integration",
+  "version": "1.0.0",
+  "publisher": "joshleichtung",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.80.0",
+    "cursor": "^0.1.0"
+  },
+  "categories": [
+    "Other",
+    "Themes",
+    "Snippets",
+    "AI"
+  ],
+  "keywords": [
+    "color",
+    "palette",
+    "ai",
+    "claude",
+    "cursor",
+    "design",
+    "accessibility",
+    "theme"
+  ],
+  "activationEvents": [
+    "onCommand:claude-color.generatePalette",
+    "onCommand:claude-color.generateFromPrompt",
+    "onCommand:claude-color.generateFromSelection",
+    "onCommand:claude-color.extractFromImage",
+    "onCommand:claude-color.showFavorites",
+    "onCommand:claude-color.getRecommendations",
+    "onCommand:claude-color.openEditor",
+    "onCommand:claude-color.analyzeColors",
+    "onCommand:claude-color.suggestImprovements"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claude-color.generatePalette",
+        "title": "Generate Color Palette",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.generateFromPrompt",
+        "title": "Generate Palette from Prompt",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.generateFromSelection",
+        "title": "Generate Palette from Selected Text",
+        "category": "Claude Color",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "claude-color.extractFromImage",
+        "title": "Extract Colors from Image",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.showFavorites",
+        "title": "Show Favorite Palettes",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.getRecommendations",
+        "title": "Get Personalized Recommendations",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.openEditor",
+        "title": "Open Palette Editor",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.analyzeColors",
+        "title": "Analyze Colors in Current File",
+        "category": "Claude Color"
+      },
+      {
+        "command": "claude-color.suggestImprovements",
+        "title": "Suggest Color Improvements",
+        "category": "Claude Color",
+        "enablement": "editorHasSelection"
+      },
+      {
+        "command": "claude-color.insertPalette",
+        "title": "Insert Palette as CSS Variables",
+        "category": "Claude Color"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "editorHasSelection",
+          "command": "claude-color.generateFromSelection",
+          "group": "claude-color"
+        },
+        {
+          "when": "editorHasSelection",
+          "command": "claude-color.suggestImprovements",
+          "group": "claude-color"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "claude-color.generateFromSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "claude-color.suggestImprovements",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Claude Color",
+      "properties": {
+        "claudeColor.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API key for AI-powered features",
+          "order": 1
+        },
+        "claudeColor.defaultScheme": {
+          "type": "string",
+          "enum": [
+            "complementary",
+            "analogous",
+            "triadic",
+            "tetradic",
+            "monochromatic",
+            "random"
+          ],
+          "default": "complementary",
+          "description": "Default color scheme for palette generation",
+          "order": 2
+        },
+        "claudeColor.autoTrackInteractions": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically track interactions for personalized recommendations",
+          "order": 3
+        },
+        "claudeColor.insertFormat": {
+          "type": "string",
+          "enum": [
+            "css-variables",
+            "sass-variables",
+            "tailwind-config",
+            "json",
+            "js-object"
+          ],
+          "default": "css-variables",
+          "description": "Format for inserting palettes into editor",
+          "order": 4
+        },
+        "claudeColor.cursorIntegration": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable deep Cursor AI integration features",
+          "order": 5
+        },
+        "claudeColor.autoAnalyze": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically analyze colors when opening CSS/design files",
+          "order": 6
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.80.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "claude-color": "^1.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshleichtung/claude-color.git",
+    "directory": "cursor-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/joshleichtung/claude-color/issues"
+  },
+  "homepage": "https://github.com/joshleichtung/claude-color#readme",
+  "license": "MIT"
+}
