@@ -170,7 +170,180 @@ This document tracks all development progress, decisions, and points where user 
 
 ### Decisions
 
-_(Decisions for Phase 1 will be logged here)_
+#### [DECISION-1.1] Color Theory Library Usage
+**Question**: Use color-harmony library or implement algorithms from scratch?
+**Options**:
+1. Use color-harmony library - faster implementation
+2. Implement from scratch - full control, no dependencies
+
+**Choice**: Implement from scratch ✓ **[AUTONOMOUS]**
+**Rationale**: Color theory algorithms are straightforward (hue rotation). Custom implementation gives us exact control over output and avoids dependency on unmaintained library (last update 2014). Only ~100 lines of code.
+**Date**: 2025-10-08
+
+---
+
+## Phase 2: Basic CLI & Terminal Rendering
+
+**Status**: ✅ Complete
+**Started**: 2025-10-08
+**Completed**: 2025-10-08
+**Tag**: v0.2.0-phase2-complete
+**Commits**: 548d71c, e82c3c2
+
+### Progress
+
+- ✅ CLI commands using Commander.js (7 commands)
+- ✅ Terminal rendering with chalk
+- ✅ Export utilities (8 formats: HEX, CSS, SCSS, JSON, JS, TS, Tailwind, SVG)
+- ✅ Typed option interfaces for all commands
+- ✅ Comprehensive tests (127 tests passing)
+- ✅ Fixed chalk ESM issues with Jest mocking
+- ✅ TypeScript strict mode compliance
+- ✅ Fixed deprecated dependency warnings
+
+### Test Results
+
+**Total Tests**: 127 passing
+- Conversions: 39 tests
+- Theory: 34 tests
+- Export: 30 tests
+- Renderer: 24 tests
+
+**Coverage**:
+- Statements: 100%
+- Branches: 92.1%
+- Functions: 100%
+- Lines: 100%
+
+### Deliverables
+
+**Source Files**:
+- `src/cli.ts` - Complete CLI with 7 commands (generate, random, complementary, analogous, triadic, monochromatic, export)
+- `src/terminal/renderer.ts` - Terminal color rendering with chalk
+- `src/utils/export.ts` - Export utilities for 8 formats
+
+**Test Files**:
+- `tests/unit/export.test.ts` - 30 export format tests
+- `tests/unit/renderer.test.ts` - 24 terminal rendering tests
+- `tests/setup.ts` - Chalk mock to avoid ESM issues
+
+### Key Features
+
+**CLI Commands**:
+- `generate` - Main palette generation with all schemes
+- `random` - Quick random palette generation
+- `complementary <color>` - Two opposite colors
+- `analogous <color>` - Adjacent colors (±30°)
+- `triadic <color>` - Three colors 120° apart
+- `monochromatic <color>` - Lightness variations
+- `export <colors...>` - Export colors to file
+
+**Terminal Rendering**:
+- Side-by-side color blocks with ANSI colors
+- Configurable display options (hex, RGB, HSL)
+- Lock indicators for fixed colors
+- Palette metadata display (ID, scheme, prompt, source)
+- Multi-palette comparison rendering
+
+**Export Formats**:
+- HEX - Plain text hex list
+- CSS - Custom properties (`:root { --color-1: #FF0000; }`)
+- SCSS - Variables (`$color-1: #FF0000;`)
+- JSON - Structured palette data
+- JavaScript - ES6 module export
+- TypeScript - Typed ES6 module export
+- Tailwind - Config file format with color weights
+- SVG - Visual color swatch representation
+
+### Decisions
+
+#### [DECISION-2.1] CLI Framework Selection
+**Question**: Which CLI framework to use?
+**Options**:
+1. Commander.js - Most popular, stable
+2. yargs - More feature-rich, heavier
+3. Minimist - Minimal, manual parsing
+
+**Choice**: Commander.js ✓ **[AUTONOMOUS]**
+**Rationale**: Industry standard for Node.js CLIs. Clean syntax, well-documented, TypeScript support. Perfect for our command structure.
+**Date**: 2025-10-08
+
+#### [DECISION-2.2] Terminal Rendering Library
+**Question**: How to render colors in terminal?
+**Options**:
+1. chalk - Most popular, simple API
+2. ansi-colors - Lightweight alternative
+3. kleur - Minimal, fast
+4. Manual ANSI codes - No dependency
+
+**Choice**: chalk ✓ **[AUTONOMOUS]**
+**Rationale**: Most established library (50M+ weekly downloads), excellent API for hex colors (`chalk.bgHex()`), works well with Ink which we'll use in Phase 7.
+**Date**: 2025-10-08
+
+#### [DECISION-2.3] Export Format Priority
+**Question**: Which export formats to implement first?
+**Options**:
+1. All 8 formats - comprehensive
+2. HEX, CSS, JSON only - MVP
+3. Based on user request
+
+**Choice**: All 8 formats ✓ **[AUTONOMOUS]**
+**Rationale**: Export functionality is straightforward (~200 lines total). Implementing all formats now prevents need to add them iteratively. Covers all major use cases (web developers, designers, data interchange).
+**Date**: 2025-10-08
+
+#### [DECISION-2.4] Chalk ESM Compatibility
+**Question**: How to handle chalk v5.x ESM issues with Jest?
+**Options**:
+1. Downgrade to chalk v4.x (CommonJS)
+2. Configure Jest transformIgnorePatterns
+3. Mock chalk in tests
+4. Switch to ts-jest ESM mode
+
+**Choice**: Mock chalk in tests ✓ **[AUTONOMOUS]**
+**Rationale**: Tried option 2 (transformIgnorePatterns) but Jest still had issues. Mocking is cleanest solution - tests don't need actual ANSI codes, just verify structure. Keeps chalk v5.x for actual CLI (better API). Mock returns passthrough functions that preserve text.
+**Date**: 2025-10-08
+
+#### [DECISION-2.5] Option Type Safety
+**Question**: How to handle Commander.js option types?
+**Options**:
+1. Use `any` type (default)
+2. Cast to interfaces in action handlers
+3. Create typed interfaces for all options
+
+**Choice**: Typed interfaces for all options ✓ **[AUTONOMOUS]**
+**Rationale**: TypeScript strict mode requires explicit typing. Created 6 interfaces (GenerateOptions, RandomOptions, DisplayOptions, MonochromaticOptions, AnalogousOptions, ExportOptions). Provides full IntelliSense, catches errors at compile time.
+**Date**: 2025-10-08
+
+#### [DECISION-2.6] Deprecated Dependency Resolution
+**Question**: How to handle deprecated transitive dependencies (inflight, glob, rimraf)?
+**Options**:
+1. Wait for Jest/ESLint to update
+2. Use npm overrides to force newer versions
+3. Switch to alternative test/lint tools
+
+**Choice**: npm overrides ✓ **[AUTONOMOUS]**
+**Rationale**: User flagged `inflight` deprecation warning. npm overrides force transitive dependencies to newer versions without waiting for upstream updates. Changed inflight to maintained fork (@mswjs/inflight), glob to v10, rimraf to v5. All tests still pass.
+**Date**: 2025-10-08
+
+### Issues Resolved
+
+**Issue 1**: Chalk ESM Import Errors
+- **Symptom**: `Cannot use import statement outside a module` when running tests
+- **Root Cause**: chalk v5.x is pure ESM, Jest with ts-jest has transformation issues
+- **Solution**: Created comprehensive mock in `tests/setup.ts` that returns passthrough functions
+- **Result**: All 127 tests pass with mocked chalk
+
+**Issue 2**: TypeScript Strict Mode Errors
+- **Symptom**: 78 "Unsafe member access on `any` value" errors in CLI actions
+- **Root Cause**: Commander.js action callbacks receive untyped options
+- **Solution**: Created 6 typed interfaces for all command option structures
+- **Result**: Zero TypeScript errors, full strict mode compliance
+
+**Issue 3**: Deprecated Package Warnings
+- **Symptom**: npm warnings for inflight@1.0.6, glob@7.2.3, rimraf@3.0.2
+- **Root Cause**: Transitive dependencies from Jest and ESLint using old versions
+- **Solution**: Added npm overrides to force newer versions
+- **Result**: No deprecation warnings, all tests passing
 
 ---
 
