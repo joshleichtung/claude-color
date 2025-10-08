@@ -585,7 +585,7 @@ Phase completion commits will be listed here with their hashes after they're cre
 **Started**: 2025-10-08
 **Completed**: 2025-10-08
 **Tag**: v0.4.0-phase4-complete
-**Commit**: TBD
+**Commit**: 08e8f75
 
 ### Progress
 
