@@ -26,6 +26,11 @@
     "prepare": "husky install",
     "prepublishOnly": "npm run build && npm test"
   },
+  "overrides": {
+    "inflight": "npm:@mswjs/inflight@^1.0.0",
+    "glob": "^10.3.10",
+    "rimraf": "^5.0.5"
+  },
   "keywords": [
     "color",
     "palette",
