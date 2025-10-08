@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  claude-color:
+    build: .
+    image: claude-color:latest
+    container_name: claude-color
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    volumes:
+      - claude-color-data:/root/.claude-color
+      - ./projects:/projects
+    stdin_open: true
+    tty: true
+
+volumes:
+  claude-color-data:

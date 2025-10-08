@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>claude-color</id>
+    <version>1.0.0</version>
+    <packageSourceUrl>https://github.com/joshleichtung/claude-color</packageSourceUrl>
+    <owners>Josh Leichtung</owners>
+    <title>Claude Color</title>
+    <authors>Josh Leichtung</authors>
+    <projectUrl>https://github.com/joshleichtung/claude-color</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/joshleichtung/claude-color/main/icon.png</iconUrl>
+    <copyright>2025 Josh Leichtung</copyright>
+    <licenseUrl>https://github.com/joshleichtung/claude-color/blob/main/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/joshleichtung/claude-color</projectSourceUrl>
+    <docsUrl>https://github.com/joshleichtung/claude-color#readme</docsUrl>
+    <bugTrackerUrl>https://github.com/joshleichtung/claude-color/issues</bugTrackerUrl>
+    <tags>color palette ai claude terminal cli design accessibility</tags>
+    <summary>AI-powered terminal color palette generator with preference learning</summary>
+    <description>
+Claude Color is an AI-powered CLI tool for generating beautiful, accessible color palettes.
+
+Features:
+- Generate palettes using color theory schemes (complementary, analogous, triadic, etc.)
+- AI-powered palette generation from natural language descriptions
+- Extract colors from images and websites
+- Personalized recommendations based on your preferences
+- Interactive TUI palette editor
+- Export to CSS, Sass, Tailwind, and more
+- Favorites management with tags and search
+- WCAG accessibility compliance checking
+- Preference learning for personalized suggestions
+    </description>
+    <releaseNotes>https://github.com/joshleichtung/claude-color/blob/main/CHANGELOG.md</releaseNotes>
+    <dependencies>
+      <dependency id="nodejs" version="18.0.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>
