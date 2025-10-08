@@ -118,10 +118,42 @@ export interface FavoritePalette extends Palette {
 }
 
 /**
+ * User interaction types for preference learning
+ */
+export type InteractionType =
+  | 'save'
+  | 'edit'
+  | 'generate'
+  | 'view'
+  | 'search'
+  | 'export'
+  | 'delete';
+
+/**
+ * User interaction record
+ */
+export interface UserInteraction {
+  id: string;
+  timestamp: Date;
+  type: InteractionType;
+  paletteId: string;
+  colors: Color[];
+  scheme: string;
+  metadata?: {
+    prompt?: string;
+    tags?: string[];
+    editedProperties?: string[];
+    searchQuery?: string;
+    exportFormat?: string;
+  };
+}
+
+/**
  * Favorites database schema
  */
 export interface FavoritesDatabase {
   favorites: FavoritePalette[];
+  interactions: UserInteraction[];
   metadata: {
     version: string;
     lastModified: Date;

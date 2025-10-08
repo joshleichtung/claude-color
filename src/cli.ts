@@ -24,6 +24,8 @@ import { generateFromPrompt, validateApiKey } from './ai/prompt';
 import { extractFromUrl, validateUrl } from './extraction/web';
 import { extractFromImage, validateImagePath, getSupportedFormats } from './extraction/image';
 import { launchPaletteEditor } from './tui';
+import { buildUserPreferences, analyzeColorPreferences } from './learning/interactions';
+import { generatePersonalizedRecommendations } from './learning/recommendations';
 
 /**
  * Command option types
@@ -162,6 +164,15 @@ program
 
       console.log(renderPaletteWithMetadata(palette, renderOptions));
 
+      // Track interaction
+      const favManager = getFavoritesManager();
+      await favManager.trackInteraction({
+        type: 'generate',
+        paletteId: palette.id,
+        colors: palette.colors,
+        scheme: palette.scheme,
+      });
+
       // Export if requested
       if (options.export) {
         const format = options.export as ExportFormat;
@@ -174,19 +185,47 @@ program
           console.log('\n--- Export ---');
           console.log(content);
         }
+
+        // Track export interaction
+        await favManager.trackInteraction({
+          type: 'export',
+          paletteId: palette.id,
+          colors: palette.colors,
+          scheme: palette.scheme,
+          metadata: { exportFormat: format },
+        });
       }
 
       // Save as favorite if requested
       if (options.save) {
-        const favManager = getFavoritesManager();
         const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
         await favManager.saveFavorite(palette, options.save, tags);
         console.log(`\n✓ Saved as favorite: "${options.save}"`);
+
+        // Track save interaction
+        await favManager.trackInteraction({
+          type: 'save',
+          paletteId: palette.id,
+          colors: palette.colors,
+          scheme: palette.scheme,
+          metadata: { tags },
+        });
       }
     } else {
       // Multiple suggestions
       const suggestionSet = generateSuggestions(baseColor, scheme, numSuggestions);
       console.log(renderSuggestionSet(suggestionSet, renderOptions));
+
+      // Track interactions for each suggestion
+      const favManager = getFavoritesManager();
+      for (const suggestion of suggestionSet.suggestions) {
+        await favManager.trackInteraction({
+          type: 'generate',
+          paletteId: suggestion.palette.id,
+          colors: suggestion.palette.colors,
+          scheme: suggestion.palette.scheme,
+        });
+      }
 
       // Export if requested (exports first suggestion)
       if (options.export && suggestionSet.suggestions[0]) {
@@ -200,14 +239,31 @@ program
           console.log('\n--- Export (First Suggestion) ---');
           console.log(content);
         }
+
+        // Track export interaction
+        await favManager.trackInteraction({
+          type: 'export',
+          paletteId: suggestionSet.suggestions[0].palette.id,
+          colors: suggestionSet.suggestions[0].palette.colors,
+          scheme: suggestionSet.suggestions[0].palette.scheme,
+          metadata: { exportFormat: format },
+        });
       }
 
       // Save first suggestion as favorite if requested
       if (options.save && suggestionSet.suggestions[0]) {
-        const favManager = getFavoritesManager();
         const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
         await favManager.saveFavorite(suggestionSet.suggestions[0].palette, options.save, tags);
         console.log(`\n✓ Saved first suggestion as favorite: "${options.save}"`);
+
+        // Track save interaction
+        await favManager.trackInteraction({
+          type: 'save',
+          paletteId: suggestionSet.suggestions[0].palette.id,
+          colors: suggestionSet.suggestions[0].palette.colors,
+          scheme: suggestionSet.suggestions[0].palette.scheme,
+          metadata: { tags },
+        });
       }
     }
   });
@@ -442,12 +498,30 @@ program
           console.log(`\n💡 AI Reasoning: ${palette.metadata.aiReasoning}\n`);
         }
 
+        // Track interaction
+        const favManager = getFavoritesManager();
+        await favManager.trackInteraction({
+          type: 'generate',
+          paletteId: palette.id,
+          colors: palette.colors,
+          scheme: palette.scheme,
+          metadata: { prompt: description },
+        });
+
         // Save as favorite if requested
         if (options.save) {
-          const favManager = getFavoritesManager();
           const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
           await favManager.saveFavorite(palette, options.save, tags);
           console.log(`✓ Saved as favorite: "${options.save}"`);
+
+          // Track save interaction
+          await favManager.trackInteraction({
+            type: 'save',
+            paletteId: palette.id,
+            colors: palette.colors,
+            scheme: palette.scheme,
+            metadata: { tags, prompt: description },
+          });
         }
       } catch (error) {
         if (error instanceof Error) {
@@ -498,12 +572,29 @@ program
 
         console.log('');
 
+        // Track interaction
+        const favManager = getFavoritesManager();
+        await favManager.trackInteraction({
+          type: 'generate',
+          paletteId: palette.id,
+          colors: palette.colors,
+          scheme: palette.scheme,
+        });
+
         // Save as favorite if requested
         if (options.save) {
-          const favManager = getFavoritesManager();
           const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
           await favManager.saveFavorite(palette, options.save, tags);
           console.log(`✓ Saved as favorite: "${options.save}"\n`);
+
+          // Track save interaction
+          await favManager.trackInteraction({
+            type: 'save',
+            paletteId: palette.id,
+            colors: palette.colors,
+            scheme: palette.scheme,
+            metadata: { tags },
+          });
         }
       } catch (error) {
         if (error instanceof Error) {
@@ -556,12 +647,29 @@ program
 
         console.log('');
 
+        // Track interaction
+        const favManager = getFavoritesManager();
+        await favManager.trackInteraction({
+          type: 'generate',
+          paletteId: palette.id,
+          colors: palette.colors,
+          scheme: palette.scheme,
+        });
+
         // Save as favorite if requested
         if (options.save) {
-          const favManager = getFavoritesManager();
           const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
           await favManager.saveFavorite(palette, options.save, tags);
           console.log(`✓ Saved as favorite: "${options.save}"\n`);
+
+          // Track save interaction
+          await favManager.trackInteraction({
+            type: 'save',
+            paletteId: palette.id,
+            colors: palette.colors,
+            scheme: palette.scheme,
+            metadata: { tags },
+          });
         }
       } catch (error) {
         if (error instanceof Error) {
@@ -620,11 +728,29 @@ program
             })
           );
 
-          // Save as favorite
-          const favManager = getFavoritesManager();
-          void favManager.saveFavorite(editedPalette, `edited-${editedPalette.id.slice(0, 8)}`, [
-            'edited',
-          ]);
+          // Save as favorite and track interactions (non-blocking)
+          void (async () => {
+            const favManager = getFavoritesManager();
+            await favManager.saveFavorite(editedPalette, `edited-${editedPalette.id.slice(0, 8)}`, [
+              'edited',
+            ]);
+
+            // Track edit and save interactions
+            await favManager.trackInteraction({
+              type: 'edit',
+              paletteId: editedPalette.id,
+              colors: editedPalette.colors,
+              scheme: editedPalette.scheme,
+            });
+            await favManager.trackInteraction({
+              type: 'save',
+              paletteId: editedPalette.id,
+              colors: editedPalette.colors,
+              scheme: editedPalette.scheme,
+              metadata: { tags: ['edited'] },
+            });
+          })();
+
           console.log('\nSaved to favorites. Use "claude-color favorites" to view.');
         },
         () => {
@@ -701,6 +827,18 @@ program
       const favManager = getFavoritesManager();
       const results = await favManager.searchFavorites(query);
 
+      // Track search interaction
+      const firstResult = results[0];
+      if (firstResult) {
+        await favManager.trackInteraction({
+          type: 'search',
+          paletteId: firstResult.id,
+          colors: firstResult.colors,
+          scheme: firstResult.scheme,
+          metadata: { searchQuery: query },
+        });
+      }
+
       if (results.length === 0) {
         console.log(`\nNo favorites found matching "${query}"`);
         return;
@@ -740,9 +878,17 @@ program
   .action(async (id: string) => {
     try {
       const favManager = getFavoritesManager();
+      const favorite = await favManager.getFavorite(id);
       const deleted = await favManager.deleteFavorite(id);
 
-      if (deleted) {
+      if (deleted && favorite) {
+        // Track delete interaction
+        await favManager.trackInteraction({
+          type: 'delete',
+          paletteId: favorite.id,
+          colors: favorite.colors,
+          scheme: favorite.scheme,
+        });
         console.log(`\n✓ Deleted favorite: ${id}`);
       } else {
         console.error(`\nError: No favorite found with ID: ${id}`);
@@ -804,6 +950,145 @@ program
 
       const count = await favManager.count();
       console.log(`\n✓ Import complete. Total favorites: ${count}`);
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Preferences command - view user taste profile
+ */
+program
+  .command('preferences')
+  .alias('prefs')
+  .description('View your color palette preferences and taste profile')
+  .action(async () => {
+    try {
+      const favManager = getFavoritesManager();
+      const interactions = await favManager.getInteractions();
+
+      if (interactions.length < 3) {
+        console.log('\n📊 Not enough data to build preferences yet.');
+        console.log(`You have ${interactions.length} interaction(s). Need at least 3 to analyze preferences.`);
+        console.log('\nGenerate, save, and explore more palettes to build your taste profile!\n');
+        return;
+      }
+
+      const preferences = buildUserPreferences(interactions);
+      const colorPrefs = analyzeColorPreferences(interactions);
+
+      console.log('\n🎨 Your Color Palette Preferences\n');
+      console.log(`Total Interactions: ${preferences.totalInteractions}`);
+      console.log(`Recent Activity: ${preferences.recentActivity.length} interactions\n`);
+
+      // Favorite schemes
+      console.log('📐 Favorite Color Schemes:');
+      const sortedSchemes = Object.entries(preferences.favoriteSchemes)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3);
+      sortedSchemes.forEach(([scheme, count]) => {
+        console.log(`  • ${scheme}: ${count} times`);
+      });
+      console.log('');
+
+      // Favorite hue ranges
+      if (preferences.favoriteHueRanges.length > 0) {
+        console.log('🌈 Favorite Color Ranges:');
+        preferences.favoriteHueRanges
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 3)
+          .forEach(range => {
+            console.log(`  • ${range.name} (${range.min}°-${range.max}°): ${range.count} colors`);
+          });
+        console.log('');
+      }
+
+      // Color preferences
+      console.log('🎯 Color Characteristics:');
+      console.log(`  • Saturation: ${Math.round(colorPrefs.saturationPreference * 100)}%`);
+      console.log(`  • Lightness: ${Math.round(colorPrefs.lightnessPreference * 100)}%`);
+      console.log('');
+
+      // Tags
+      if (Object.keys(preferences.commonTags).length > 0) {
+        console.log('🏷️  Common Tags:');
+        Object.entries(preferences.commonTags)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 5)
+          .forEach(([tag, count]) => {
+            console.log(`  • ${tag}: ${count} times`);
+          });
+        console.log('');
+      }
+
+      console.log('💡 Tip: Use "claude-color recommend" to get personalized palette suggestions!\n');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
+ * Recommend command - generate personalized recommendations
+ */
+program
+  .command('recommend')
+  .alias('rec')
+  .description('Get personalized palette recommendations based on your taste')
+  .option('-c, --count <number>', 'Number of recommendations (1-10)', '3')
+  .option('--hex', 'Show hex values', true)
+  .option('--rgb', 'Show RGB values', false)
+  .option('--hsl', 'Show HSL values', false)
+  .action(async (options: { count: string; hex: boolean; rgb: boolean; hsl: boolean }) => {
+    try {
+      // Validate API key
+      if (!validateApiKey()) {
+        console.error('Error: ANTHROPIC_API_KEY environment variable is required');
+        console.error('Get your API key from https://console.anthropic.com/');
+        console.error('\nSet it using:');
+        console.error('  export ANTHROPIC_API_KEY=your-key-here');
+        console.error('Or create a .env file with: ANTHROPIC_API_KEY=your-key-here');
+        process.exit(1);
+      }
+
+      const favManager = getFavoritesManager();
+      const interactions = await favManager.getInteractions();
+
+      if (interactions.length < 3) {
+        console.log('\n📊 Not enough data for personalized recommendations yet.');
+        console.log(`You have ${interactions.length} interaction(s). Need at least 3 to generate recommendations.`);
+        console.log('\nGenerate, save, and explore more palettes to build your taste profile!\n');
+        return;
+      }
+
+      const count = Math.min(10, Math.max(1, parseInt(options.count, 10)));
+      console.log(`\n🤖 Generating ${count} personalized recommendation(s) based on your taste...\n`);
+
+      const recommendations = await generatePersonalizedRecommendations(interactions, count);
+
+      console.log(`✨ Your Personalized Recommendations\n`);
+
+      recommendations.forEach((rec, index) => {
+        console.log(`${index + 1}. Score: ${rec.score}/100`);
+        if (rec.reasoning) {
+          console.log(`   💡 ${rec.reasoning}`);
+        }
+        console.log(
+          renderPalette(rec.palette.colors, {
+            showHex: options.hex,
+            showRgb: options.rgb,
+            showHsl: options.hsl,
+          })
+        );
+        console.log('');
+      });
+
+      console.log('💡 Tip: Use --save option with generate/prompt commands to save palettes you like!\n');
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Error: ${error.message}`);

@@ -56,6 +56,7 @@ export class FavoritesManager {
   private getDefaultData(): FavoritesDatabase {
     return {
       favorites: [],
+      interactions: [],
       metadata: {
         version: VERSION,
         lastModified: new Date(),
@@ -324,6 +325,82 @@ export class FavoritesManager {
 
     const count = this.getData().favorites.length;
     this.getData().favorites = [];
+    await this.save();
+
+    return count;
+  }
+
+  /**
+   * Track a user interaction
+   *
+   * @param interaction - Interaction to record
+   */
+  async trackInteraction(interaction: Omit<import('../types').UserInteraction, 'id' | 'timestamp'>): Promise<void> {
+    await this.initialize();
+
+    const { nanoid } = await import('nanoid');
+    const fullInteraction: import('../types').UserInteraction = {
+      ...interaction,
+      id: nanoid(),
+      timestamp: new Date(),
+    };
+
+    this.getData().interactions.push(fullInteraction);
+
+    // Keep only last 500 interactions to prevent database bloat
+    if (this.getData().interactions.length > 500) {
+      this.getData().interactions = this.getData().interactions.slice(-500);
+    }
+
+    await this.save();
+  }
+
+  /**
+   * Get all interactions
+   *
+   * @param limit - Maximum number to return (default: all)
+   * @returns Array of user interactions
+   */
+  async getInteractions(limit?: number): Promise<import('../types').UserInteraction[]> {
+    await this.initialize();
+
+    const interactions = this.getData().interactions;
+    if (limit && limit > 0) {
+      return interactions.slice(-limit);
+    }
+    return interactions;
+  }
+
+  /**
+   * Get interactions by type
+   *
+   * @param type - Interaction type to filter by
+   * @param limit - Maximum number to return
+   * @returns Filtered interactions
+   */
+  async getInteractionsByType(
+    type: import('../types').InteractionType,
+    limit?: number
+  ): Promise<import('../types').UserInteraction[]> {
+    await this.initialize();
+
+    const filtered = this.getData().interactions.filter(i => i.type === type);
+    if (limit && limit > 0) {
+      return filtered.slice(-limit);
+    }
+    return filtered;
+  }
+
+  /**
+   * Clear all interactions
+   *
+   * @returns Number of interactions deleted
+   */
+  async clearInteractions(): Promise<number> {
+    await this.initialize();
+
+    const count = this.getData().interactions.length;
+    this.getData().interactions = [];
     await this.save();
 
     return count;
