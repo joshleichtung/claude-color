@@ -248,11 +248,7 @@ export function generateRandom(count: number = 5): Color[] {
  * const colors = generatePalette(baseColor, 'analogous', 5);
  * ```
  */
-export function generatePalette(
-  baseColor: Color,
-  scheme: ColorScheme,
-  count: number = 5
-): Color[] {
+export function generatePalette(baseColor: Color, scheme: ColorScheme, count: number = 5): Color[] {
   switch (scheme) {
     case 'complementary':
       return generateComplementary(baseColor);
