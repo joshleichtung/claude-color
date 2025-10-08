@@ -1,0 +1,103 @@
+{
+  "name": "claude-color",
+  "version": "0.0.0",
+  "description": "AI-powered terminal color palette generator with preference learning",
+  "main": "dist/index.js",
+  "bin": {
+    "claude-color": "dist/cli.js"
+  },
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "lint:fix": "eslint 'src/**/*.{ts,tsx}' --fix",
+    "format": "prettier --write 'src/**/*.{ts,tsx,json,md}'",
+    "format:check": "prettier --check 'src/**/*.{ts,tsx,json,md}'",
+    "type-check": "tsc --noEmit",
+    "prepare": "husky install",
+    "prepublishOnly": "npm run build && npm test"
+  },
+  "keywords": [
+    "color",
+    "palette",
+    "generator",
+    "ai",
+    "terminal",
+    "cli",
+    "design",
+    "claude",
+    "accessibility",
+    "wcag"
+  ],
+  "author": "Josh Leichtung",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/joshleichtung/claude-color.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joshleichtung/claude-color/issues"
+  },
+  "homepage": "https://github.com/joshleichtung/claude-color#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.20.0",
+    "chalk": "^5.3.0",
+    "chroma-js": "^2.4.2",
+    "color-harmony": "^0.3.0",
+    "commander": "^11.1.0",
+    "date-fns": "^3.0.0",
+    "ink": "^4.4.1",
+    "ink-text-input": "^5.0.1",
+    "lowdb": "^7.0.1",
+    "node-vibrant": "^4.0.3",
+    "playwright": "^1.40.0",
+    "react": "^18.2.0",
+    "sharp": "^0.33.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^18.4.4",
+    "@commitlint/config-conventional": "^18.4.4",
+    "@types/chroma-js": "^2.4.3",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^8.0.3",
+    "ink-testing-library": "^3.0.0",
+    "jest": "^29.7.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.1.1",
+    "ts-jest": "^29.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  }
+}
