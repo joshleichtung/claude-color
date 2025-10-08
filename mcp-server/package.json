@@ -1,0 +1,47 @@
+{
+  "name": "@claude-color/mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Claude Color - AI-powered color palette generation",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "claude-color-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "dev": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "color",
+    "palette",
+    "ai",
+    "anthropic"
+  ],
+  "author": "Josh Leichtung",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joshleichtung/claude-color.git",
+    "directory": "mcp-server"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "claude-color": "^1.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
