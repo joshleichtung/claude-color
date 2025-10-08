@@ -108,7 +108,11 @@ export class FavoritesManager {
    * @param tags - Optional tags for categorization
    * @returns Saved favorite palette
    */
-  async saveFavorite(palette: Palette, name: string, tags: string[] = []): Promise<FavoritePalette> {
+  async saveFavorite(
+    palette: Palette,
+    name: string,
+    tags: string[] = []
+  ): Promise<FavoritePalette> {
     await this.initialize();
 
     const favorite: FavoritePalette = {

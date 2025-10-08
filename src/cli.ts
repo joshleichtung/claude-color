@@ -8,6 +8,7 @@
 
 /* eslint-disable no-console */
 
+import 'dotenv/config';
 import { Command } from 'commander';
 import { VERSION } from './index';
 import { createColorFromHex } from './core/conversions';
@@ -19,6 +20,7 @@ import { ColorScheme, Palette, FavoritesDatabase } from './types';
 import { writeFileSync, readFileSync } from 'fs';
 import { nanoid } from 'nanoid';
 import { getFavoritesManager } from './storage/favorites';
+import { generateFromPrompt, validateApiKey } from './ai/prompt';
 
 /**
  * Command option types
@@ -392,6 +394,61 @@ program
   });
 
 /**
+ * Prompt command - AI-powered palette generation
+ */
+program
+  .command('prompt <description>')
+  .description('Generate a palette from a natural language description using AI')
+  .option('--save <name>', 'Save palette as favorite with given name')
+  .option('--tags <tags>', 'Comma-separated tags for saved favorite')
+  .option('--hex', 'Show hex values', true)
+  .option('--rgb', 'Show RGB values', false)
+  .option('--hsl', 'Show HSL values', false)
+  .action(async (description: string, options: { save?: string; tags?: string; hex: boolean; rgb: boolean; hsl: boolean }) => {
+    try {
+      // Validate API key
+      if (!validateApiKey()) {
+        console.error('Error: ANTHROPIC_API_KEY environment variable is required');
+        console.error('Get your API key from https://console.anthropic.com/');
+        console.error('\nSet it using:');
+        console.error('  export ANTHROPIC_API_KEY=your-key-here');
+        console.error('Or create a .env file with: ANTHROPIC_API_KEY=your-key-here');
+        process.exit(1);
+      }
+
+      console.log(`\n🤖 Generating palette from: "${description}"\n`);
+
+      // Generate palette from AI
+      const palette = await generateFromPrompt(description);
+
+      // Display palette
+      console.log(renderPaletteWithMetadata(palette, {
+        showHex: options.hex,
+        showRgb: options.rgb,
+        showHsl: options.hsl,
+      }));
+
+      // Show AI reasoning if available
+      if (palette.metadata.aiReasoning) {
+        console.log(`\n💡 AI Reasoning: ${palette.metadata.aiReasoning}\n`);
+      }
+
+      // Save as favorite if requested
+      if (options.save) {
+        const favManager = getFavoritesManager();
+        const tags = options.tags ? options.tags.split(',').map(t => t.trim()) : [];
+        await favManager.saveFavorite(palette, options.save, tags);
+        console.log(`✓ Saved as favorite: "${options.save}"`);
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`Error: ${error.message}`);
+      }
+      process.exit(1);
+    }
+  });
+
+/**
  * Favorites command - list saved palettes
  */
 program
@@ -423,7 +480,11 @@ program
         }
         console.log(`   Scheme: ${fav.scheme} | Used: ${fav.usageCount} times`);
         console.log(
-          renderPalette(fav.colors, { showHex: options.hex, showRgb: options.rgb, showHsl: options.hsl })
+          renderPalette(fav.colors, {
+            showHex: options.hex,
+            showRgb: options.rgb,
+            showHsl: options.hsl,
+          })
         );
         console.log('');
       });
@@ -462,7 +523,11 @@ program
           console.log(`   Tags: ${fav.tags.join(', ')}`);
         }
         console.log(
-          renderPalette(fav.colors, { showHex: options.hex, showRgb: options.rgb, showHsl: options.hsl })
+          renderPalette(fav.colors, {
+            showHex: options.hex,
+            showRgb: options.rgb,
+            showHsl: options.hsl,
+          })
         );
         console.log('');
       });

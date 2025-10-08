@@ -53,6 +53,7 @@ export interface PaletteMetadata {
   originalPrompt?: string;
   sourceUrl?: string;
   sourceImage?: string;
+  aiReasoning?: string;
 }
 
 /**

@@ -101,3 +101,27 @@ jest.mock('lowdb/node', () => {
     JSONFile: MockJSONFile,
   };
 });
+
+// Mock Anthropic SDK to avoid real API calls in tests
+jest.mock('@anthropic-ai/sdk', () => {
+  const mockCreate = jest.fn().mockResolvedValue({
+    content: [
+      {
+        type: 'text',
+        text: JSON.stringify({
+          colors: ['#FF5733', '#C70039', '#900C3F', '#581845', '#FFC300'],
+          scheme: 'analogous',
+          reasoning: 'Mock AI reasoning for testing',
+        }),
+      },
+    ],
+  });
+
+  return {
+    default: jest.fn().mockImplementation(() => ({
+      messages: {
+        create: mockCreate,
+      },
+    })),
+  };
+});
