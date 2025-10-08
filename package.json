@@ -62,6 +62,7 @@
     "ink": "^4.4.1",
     "ink-text-input": "^5.0.1",
     "lowdb": "^7.0.1",
+    "nanoid": "^5.1.6",
     "node-vibrant": "^4.0.3",
     "playwright": "^1.40.0",
     "react": "^18.2.0",

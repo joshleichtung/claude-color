@@ -32,6 +32,9 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1'
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(chalk|ansi-styles|strip-ansi|ansi-regex|is-fullwidth-code-point|string-width|emoji-regex)/)'
+  ],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   verbose: true
 };
