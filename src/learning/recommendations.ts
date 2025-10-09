@@ -7,7 +7,11 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Palette, Color, ColorScheme } from '../types';
-import { buildUserPreferences, calculatePreferenceScore, analyzeColorPreferences } from './interactions';
+import {
+  buildUserPreferences,
+  calculatePreferenceScore,
+  analyzeColorPreferences,
+} from './interactions';
 import { UserInteraction } from '../types';
 import { createColorFromHex } from '../core/conversions';
 import { nanoid } from 'nanoid';
@@ -106,8 +110,8 @@ function buildRecommendationPrompt(
   colorPrefs: ReturnType<typeof analyzeColorPreferences>,
   count: number
 ): string {
-  const favoriteScheme = Object.entries(preferences.favoriteSchemes)
-    .sort(([, a], [, b]) => b - a)[0]?.[0] || 'random';
+  const favoriteScheme =
+    Object.entries(preferences.favoriteSchemes).sort(([, a], [, b]) => b - a)[0]?.[0] || 'random';
 
   const favoriteHues = preferences.favoriteHueRanges
     .sort((a, b) => b.count - a.count)
@@ -129,7 +133,12 @@ function buildRecommendationPrompt(
 - Lightness range: ${Math.round(preferences.favoriteLightnessRange.min * 100)}-${Math.round(preferences.favoriteLightnessRange.max * 100)}%
 
 **Tags Used:**
-${Object.entries(preferences.commonTags).slice(0, 5).map(([tag, count]) => `- ${tag} (${count}x)`).join('\n') || '- No tags yet'}
+${
+  Object.entries(preferences.commonTags)
+    .slice(0, 5)
+    .map(([tag, count]) => `- ${tag} (${count}x)`)
+    .join('\n') || '- No tags yet'
+}
 
 **Activity:**
 - Total interactions: ${preferences.totalInteractions}

@@ -335,7 +335,9 @@ export class FavoritesManager {
    *
    * @param interaction - Interaction to record
    */
-  async trackInteraction(interaction: Omit<import('../types').UserInteraction, 'id' | 'timestamp'>): Promise<void> {
+  async trackInteraction(
+    interaction: Omit<import('../types').UserInteraction, 'id' | 'timestamp'>
+  ): Promise<void> {
     await this.initialize();
 
     const { nanoid } = await import('nanoid');

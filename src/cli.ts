@@ -972,7 +972,9 @@ program
 
       if (interactions.length < 3) {
         console.log('\n📊 Not enough data to build preferences yet.');
-        console.log(`You have ${interactions.length} interaction(s). Need at least 3 to analyze preferences.`);
+        console.log(
+          `You have ${interactions.length} interaction(s). Need at least 3 to analyze preferences.`
+        );
         console.log('\nGenerate, save, and explore more palettes to build your taste profile!\n');
         return;
       }
@@ -1024,7 +1026,9 @@ program
         console.log('');
       }
 
-      console.log('💡 Tip: Use "claude-color recommend" to get personalized palette suggestions!\n');
+      console.log(
+        '💡 Tip: Use "claude-color recommend" to get personalized palette suggestions!\n'
+      );
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Error: ${error.message}`);
@@ -1061,13 +1065,17 @@ program
 
       if (interactions.length < 3) {
         console.log('\n📊 Not enough data for personalized recommendations yet.');
-        console.log(`You have ${interactions.length} interaction(s). Need at least 3 to generate recommendations.`);
+        console.log(
+          `You have ${interactions.length} interaction(s). Need at least 3 to generate recommendations.`
+        );
         console.log('\nGenerate, save, and explore more palettes to build your taste profile!\n');
         return;
       }
 
       const count = Math.min(10, Math.max(1, parseInt(options.count, 10)));
-      console.log(`\n🤖 Generating ${count} personalized recommendation(s) based on your taste...\n`);
+      console.log(
+        `\n🤖 Generating ${count} personalized recommendation(s) based on your taste...\n`
+      );
 
       const recommendations = await generatePersonalizedRecommendations(interactions, count);
 
@@ -1088,7 +1096,9 @@ program
         console.log('');
       });
 
-      console.log('💡 Tip: Use --save option with generate/prompt commands to save palettes you like!\n');
+      console.log(
+        '💡 Tip: Use --save option with generate/prompt commands to save palettes you like!\n'
+      );
     } catch (error) {
       if (error instanceof Error) {
         console.error(`Error: ${error.message}`);

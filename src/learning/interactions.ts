@@ -72,9 +72,7 @@ export function analyzeColorPreferences(interactions: UserInteraction[]): {
 /**
  * Analyze scheme preferences from interaction history
  */
-export function analyzeSchemePreferences(
-  interactions: UserInteraction[]
-): Record<string, number> {
+export function analyzeSchemePreferences(interactions: UserInteraction[]): Record<string, number> {
   const schemeCounts: Record<string, number> = {};
 
   for (const interaction of interactions) {
@@ -94,10 +92,7 @@ export function analyzeSchemePreferences(
  * @param preferences - User preferences from interaction history
  * @returns Score from 0-100
  */
-export function calculatePreferenceScore(
-  palette: Palette,
-  preferences: UserPreferences
-): number {
+export function calculatePreferenceScore(palette: Palette, preferences: UserPreferences): number {
   let score = 50; // Base score
 
   // Scheme preference (up to +20 points)
