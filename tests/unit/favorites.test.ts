@@ -450,6 +450,7 @@ describe('FavoritesManager', () => {
             savedAt: new Date(),
           },
         ],
+        interactions: [],
         metadata: {
           version: '0.0.0',
           lastModified: new Date(),
@@ -475,6 +476,7 @@ describe('FavoritesManager', () => {
             savedAt: new Date(),
           },
         ],
+        interactions: [],
         metadata: {
           version: '0.0.0',
           lastModified: new Date(),
@@ -503,6 +505,7 @@ describe('FavoritesManager', () => {
             savedAt: new Date(),
           },
         ],
+        interactions: [],
         metadata: {
           version: '0.0.0',
           lastModified: new Date(),
@@ -531,6 +534,7 @@ describe('FavoritesManager', () => {
             savedAt: new Date(),
           },
         ],
+        interactions: [],
         metadata: {
           version: '0.0.0',
           lastModified: new Date(),
